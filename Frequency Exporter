@@ -1,0 +1,41 @@
+import librosa
+import numpy as np
+
+# Configuration
+input_file = "File name.mp3"
+output_file = "File name - Frequency.txt"
+
+def process_audio_visualizer():
+    try:
+        y, sr = librosa.load(input_file, sr=None)
+
+        data_per_second = 30 #If you want to lower file size, decrease this number, if you want higher quality, increase it. I recommend not going below 10.
+        hop_length = int(sr * 1/(data_per_second))
+
+        stft = np.abs(librosa.stft(y, hop_length=hop_length))
+        freqs = librosa.fft_frequencies(sr=sr)
+
+        peak_indices = np.argmax(stft, axis=0)
+        peak_freqs = freqs[peak_indices]
+
+        min_f = 20
+        max_f = 8000
+
+        log_freqs = []
+        for f in peak_freqs:
+            if f <= min_f:
+                log_freqs.append(0)
+            else:
+                val = 100 * (np.log2(f/min_f) / np.log2(max_f/min_f))
+                log_freqs.append(min(100, max(0, val)))
+
+        with open(output_file, 'w') as f:
+            for val in log_freqs:
+                f.write(f"{int(round(val))}\n")
+
+        print(f"Created {output_file} with {len(normalized_rms)} entries.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+process_audio_visualizer()
