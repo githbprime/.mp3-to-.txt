@@ -1,0 +1,37 @@
+import librosa
+import numpy as np
+
+input_file = "File name.mp3"
+output_file = "File name - Spectral Range.txt"
+
+def process_audio_bandwidth_with_gate():
+    try:
+        y, sr = librosa.load(input_file, sr=None)
+
+        data_per_second = 30 #If you want to lower file size, decrease this number, if you want higher quality, increase it. I recommend not going below 10.
+        hop_length = int(sr * 1/(data_per_second))
+
+        rms = librosa.feature.rms(y=y, frame_length=hop_length*2, hop_length=hop_length)[0]
+        max_rms = np.max(rms) if np.max(rms) > 0 else 1
+        norm_rms = rms / max_rms
+
+        bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr, hop_length=hop_length)[0]
+
+        max_bw = np.max(bandwidth) if np.max(bandwidth) > 0 else 1
+        normalized_bw = (bandwidth / max_bw) * 100
+
+        with open(output_file, 'w') as f:
+            for i in range(len(normalized_bw)):
+                # If volume is less than 1% of the max, force the value to 0
+                if norm_rms[i] < 0.01:
+                    f.write("0\n")
+                else:
+                    val = int(round(normalized_bw[i]))
+                    f.write(f"{min(100, max(0, val))}\n")
+
+        print(f"Created {output_file} with {len(normalized_rms)} entries.")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+process_audio_bandwidth_with_gate()
